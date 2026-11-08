@@ -10,7 +10,7 @@ colors = ("#862633", "dark blue")
 screen = turtle.Screen()
 screen.title("ECSU Computer Science")
 screen.setup(width=0.96, height=0.86)
-screen.bgcolor("black")
+screen.bgcolor("white")
 
 canvas = screen.getcanvas()
 school_font = tkinter.font.Font(
@@ -39,8 +39,8 @@ def fit_font_width(font, text, target_width, separate_characters=False):
     return low, measure_width(), font.metrics("linespace")
 
 
-target_width = screen.window_width() * 0.94
-available_height = screen.window_height() * 0.80
+target_width = screen.window_width() * 0.98
+available_height = screen.window_height() * 0.90
 
 
 def measure_layout(width):
@@ -95,7 +95,7 @@ for index, letter in enumerate(school):
     pen.write(letter, align="center", font=("Arial Black", school_size, "bold"))
     pen.forward(letter_width / 2)
 
-pen.color("white")
+pen.color("black")
 pen.goto(0, pen_y_subject)
 pen.write(
     subject,
@@ -185,5 +185,5 @@ def animate_rain():
     screen.ontimer(animate_rain, rain_interval)
 
 
-animate_rain()
+#animate_rain()
 screen.mainloop()
