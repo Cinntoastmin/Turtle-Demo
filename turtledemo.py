@@ -1,16 +1,17 @@
 import random
+import time
 import turtle
 import tkinter.font
 
 
 school = "ECSU"
-subject = "computer science"
+subject = "Computer Science"
 colors = ("#862633", "dark blue")
 
 screen = turtle.Screen()
 screen.title("ECSU Computer Science")
 screen.setup(width=0.96, height=0.86)
-screen.bgcolor("black")
+screen.bgcolor("white")
 
 canvas = screen.getcanvas()
 school_font = tkinter.font.Font(
@@ -95,7 +96,7 @@ for index, letter in enumerate(school):
     pen.write(letter, align="center", font=("Arial Black", school_size, "bold"))
     pen.forward(letter_width / 2)
 
-pen.color("white")
+pen.color("#010101")
 pen.goto(0, pen_y_subject)
 pen.write(
     subject,
@@ -107,13 +108,15 @@ canvas_width = screen.window_width()
 canvas_height = screen.window_height()
 rain_step_size = 18
 rain_stream_spacing = 20
-rain_interval = 60
+rain_interval = 16
 rain_palette = ("#00ff41", "#00cc33", "#008f11", "#005f0a")
-rain_characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+rain_characters = "0123456789ABCDEF"
+
+screen.tracer(0, 0)
 
 
 def stream_positions(width):
-    positions = list(range(0, width, rain_stream_spacing))
+    positions = list(range(-width, width, rain_stream_spacing))
     if not positions:
         positions = [0]
     if positions[-1] != width - 1:
@@ -122,18 +125,42 @@ def stream_positions(width):
 
 
 def create_stream(x, height):
+    trail_length = 8
+    stream_speed = random.uniform(28, 82)
+    stream_size = random.randint(10, 18)
+    items = []
+    for age in range(trail_length):
+        y = random.randint(-height, 0) - age * rain_step_size
+        depth_size = max(8, stream_size + (trail_length - age) // 2)
+        item = canvas.create_text(
+            x,
+            y,
+            text=random.choice(rain_characters),
+            fill=rain_palette[min(age // 2, len(rain_palette) - 1)],
+            font=("Courier New", depth_size, "bold"),
+            tags=("rain",),
+        )
+        items.append(item)
     return {
         "x": x,
         "y": random.randint(-height, 0),
-        "speed": random.randint(5, 9),
-        "items": [],
+        "speed": stream_speed,
+        "size": stream_size,
+        "items": items,
     }
 
 
 streams = [create_stream(x, canvas_height) for x in stream_positions(canvas_width)]
+last_frame_time = time.monotonic()
 
 
 def animate_rain():
+    global last_frame_time
+
+    now = time.monotonic()
+    dt = min(max(now - last_frame_time, 0.016), 0.05)
+    last_frame_time = now
+
     current_width = canvas.winfo_width()
     current_height = canvas.winfo_height()
     if current_width <= 1:
@@ -152,36 +179,37 @@ def animate_rain():
 
     for index, stream in enumerate(streams):
         stream["x"] = positions[index]
-        stream["y"] += stream["speed"]
-        item = canvas.create_text(
-            stream["x"],
-            stream["y"],
-            text=random.choice(rain_characters),
-            fill=rain_palette[0],
-            font=("Courier New", 12, "bold"),
-            tags=("rain",),
-        )
-        stream["items"].insert(0, item)
-
-        if len(stream["items"]) > 8:
-            canvas.delete(stream["items"].pop())
+        stream["y"] += stream["speed"] * dt
 
         for age, trail_item in enumerate(stream["items"]):
-            canvas.coords(
-                trail_item,
-                stream["x"],
-                stream["y"] - age * rain_step_size,
-            )
+            trail_y = stream["y"] - age * rain_step_size
+            font_size = max(8, stream["size"] + (len(stream["items"]) - age) // 2)
+            canvas.coords(trail_item, stream["x"], trail_y)
+            if age == 0 or random.random() < 0.5:
+                canvas.itemconfigure(
+                    trail_item,
+                    text=random.choice(rain_characters),
+                )
             canvas.itemconfigure(
                 trail_item,
-                text=random.choice(rain_characters),
                 fill=rain_palette[min(age // 2, len(rain_palette) - 1)],
+                font=("Courier New", font_size, "bold"),
             )
 
         if stream["y"] - 8 * rain_step_size > current_height:
             stream["y"] = random.randint(-current_height, -rain_step_size)
+            for age, trail_item in enumerate(stream["items"]):
+                font_size = max(8, stream["size"] + (len(stream["items"]) - age) // 2)
+                canvas.coords(trail_item, stream["x"], stream["y"] - age * rain_step_size)
+                canvas.itemconfigure(
+                    trail_item,
+                    text=random.choice(rain_characters),
+                    fill=rain_palette[min(age // 2, len(rain_palette) - 1)],
+                    font=("Courier New", font_size, "bold"),
+                )
 
     canvas.tag_lower("rain")
+    screen.update()
     screen.ontimer(animate_rain, rain_interval)
 
 
